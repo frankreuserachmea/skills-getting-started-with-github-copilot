@@ -19,15 +19,54 @@ document.addEventListener("DOMContentLoaded", () => {
         activityCard.className = "activity-card";
 
         const spotsLeft = details.max_participants - details.participants.length;
-
+        // Maak deelnemerslijst met delete-knop
+        let participantsList = '';
+        if (details.participants.length > 0) {
+          participantsList = details.participants.map(p =>
+            `<li style="list-style-type:none;display:flex;align-items:center;gap:6px;">
+              <span>${p}</span>
+              <button class="delete-participant-btn" data-activity="${encodeURIComponent(name)}" data-participant="${encodeURIComponent(p)}" title="Verwijder deelnemer" style="background:none;border:none;cursor:pointer;font-size:1em;">🗑️</button>
+            </li>`
+          ).join('');
+        } else {
+          participantsList = '<li style="list-style-type:none;"><em>No participants yet</em></li>';
+        }
         activityCard.innerHTML = `
           <h4>${name}</h4>
           <p>${details.description}</p>
           <p><strong>Schedule:</strong> ${details.schedule}</p>
           <p><strong>Availability:</strong> ${spotsLeft} spots left</p>
+          <div class="participants-section">
+            <strong>Participants:</strong>
+            <ul class="participants-list" style="padding-left:0;">
+              ${participantsList}
+            </ul>
+          </div>
         `;
 
         activitiesList.appendChild(activityCard);
+
+        // Voeg event listeners toe aan delete-knoppen
+        setTimeout(() => {
+          activityCard.querySelectorAll('.delete-participant-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+              const activityName = decodeURIComponent(btn.getAttribute('data-activity'));
+              const participant = decodeURIComponent(btn.getAttribute('data-participant'));
+              if (confirm(`Weet je zeker dat je ${participant} wilt verwijderen uit ${activityName}?`)) {
+                try {
+                  const response = await fetch(`/activities/${encodeURIComponent(activityName)}/unregister?email=${encodeURIComponent(participant)}`, { method: 'POST' });
+                  if (response.ok) {
+                    fetchActivities();
+                  } else {
+                    alert('Verwijderen mislukt.');
+                  }
+                } catch (err) {
+                  alert('Netwerkfout bij verwijderen.');
+                }
+              }
+            });
+          });
+        }, 0);
 
         // Add option to select dropdown
         const option = document.createElement("option");
