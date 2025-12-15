@@ -1,2 +1,5 @@
+# Voor testen en API
+fastapi
+httpx
 fastapi
 uvicorn
